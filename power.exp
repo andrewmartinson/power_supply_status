@@ -1,0 +1,60 @@
+#!/usr/bin/expect -f
+
+# Set variables
+
+set hostname [lindex $argv 0]
+
+set username $env(USER)
+
+set password [lindex $argv 1]
+
+# Display which switches are being worked on
+
+send_user "\n"
+
+send_user ">>>>> Pulling power supply info for $hostname @ [exec date] <<<<<\n"
+
+send_user "\n"
+
+# Don't check keys
+
+spawn ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $username\@$hostname
+
+# Allow this script to handle ssh connection issues
+
+expect {
+
+timeout { send_user "\nTimeout Exceeded - Check Host\n"; exit 1 }
+
+eof { send_user "\nSSH Connection To $hostname Failed\n"; exit 1 }
+
+"*#" {}
+
+"*assword:" {
+
+send "$password\n"
+
+expect "*>"
+}
+
+}
+
+# Log power supply state
+
+log_file results.log
+
+# Pull environmental variables
+
+send "show chassis environment\n"
+ 
+expect "*>"
+
+log_file
+
+send "exit"
+
+exit
+
+
+
+
